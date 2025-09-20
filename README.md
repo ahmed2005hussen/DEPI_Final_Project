@@ -1,8 +1,8 @@
-# 📈 Sales Forecasting and Optimization Project
+# 📈 Heart disease
 
 ## 🎯 Project Overview
 
-This project aims to predict future sales for retail or e-commerce businesses using historical sales data. We leverage advanced machine learning techniques and time-series forecasting models to help businesses optimize inventory, marketing, and sales strategies.
+edit this 
 
 **Project Duration**: 5 Milestones  
 **Program**: DEPI - Digital Egypt Pioneers Initiative  
@@ -10,8 +10,11 @@ This project aims to predict future sales for retail or e-commerce businesses us
 
 ---
 
+link: (https://www.kaggle.com/datasets/alexteboul/heart-disease-health-indicators-dataset)
+---
 ## 👥 Team Members
 
+- **Ahmed Hussein** - [@]
 - **Mawada Emad** - [@MawadaEmad](https://github.com/mawadaemad)
 - **Menna Abdelgawad** - [@MennaAbdelgawad](https://github.com/Menna-AbdElGawad)  
 - **Mohammed Elgayar** - [@mohammedElgayar](https://github.com/mohamedelgayar5)

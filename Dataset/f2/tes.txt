@@ -1,1 +1,0 @@
-https://www.kaggle.com/datasets/shelvigarg/sales-forecasting-womart-store?select=TRAIN.csv
