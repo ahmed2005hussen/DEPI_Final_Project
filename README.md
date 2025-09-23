@@ -54,3 +54,26 @@ Benefits include:
 
 ---
 
+---
+## 🎯 Project Goals
+1. Develop a **predictive analytics system** to assess patient health risk and provide clear, explainable insights into thier medical status.
+2. Enable **personalized healthcare support** through recommendations, AI-powered health coaching and lifestyle guidance.
+3. Enhance patient engagement by providing interactive tools such as **3D visualiztaions of the heart and bilingual (Arabic/English) interfaces**.
+4. Support proactive healthcare with the **automated health plans**, real-time risk classification and preventive recommendations.
+5. Promote general health awareness by delivering accessible advice for maintaing a **healthy lifestyle**.
+
+---
+## 📊 Success Metrics
+1. **Prediction Accuracy**:
+Model achieves at least 80-85% accuracy in predicting patient risk categories.
+2. **Explainability**:
+Each patient risk score is paired with an explainable brakdown of contributing factors(e.g, weight, caffeine intake, ...).
+3. **User Engagement**:
+≥ 70% of users interact with dashboard features (3D visualization, AI coach, or recommendations) during initial testing.
+4. **Personalization Success**:
+At least 60% of generated recommendations/plans are rated as useful or highly useful by test users.
+5. **Accessibility**: 
+Full bilingual support (Arabic + English) available, with the users able to switch easily.
+6. **Automation Efficiency**:
+Auto-generated health plans correclty export and download in under 5 seconds, without user intervention.
+---
