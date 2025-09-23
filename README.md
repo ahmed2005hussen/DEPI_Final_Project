@@ -54,7 +54,6 @@ Benefits include:
 
 ---
 
----
 ## 🎯 Project Goals
 1. Develop a **predictive analytics system** to assess patient health risk and provide clear, explainable insights into thier medical status.
 2. Enable **personalized healthcare support** through recommendations, AI-powered health coaching and lifestyle guidance.
