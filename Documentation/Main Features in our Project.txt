@@ -5,3 +5,4 @@
 5- AI Health Coach 
 6- auto generate file for a plan 
 7- general advise for health life 
+8- arabic and english versions 
