@@ -25,6 +25,11 @@
 [Heart Disease Dataset](https://www.kaggle.com/datasets/alexteboul/heart-disease-health-indicators-dataset)
 
 ---
+##  Link APP
+
+[Heart Disease app](https://depi-final-project.streamlit.app/)
+
+---
 
 ## 📝 Project Statement
 
