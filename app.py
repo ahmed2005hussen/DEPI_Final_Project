@@ -1,6 +1,8 @@
 import streamlit as st
 import joblib
 import pandas as pd
+from groq import Groq
+
 
 # Load model
 @st.cache_resource
@@ -41,6 +43,14 @@ def age_to_category(age):
 
 model = load_model()
 
+# Initialize session state for chat history
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+if 'prediction_made' not in st.session_state:
+    st.session_state.prediction_made = False
+if 'patient_context' not in st.session_state:
+    st.session_state.patient_context = {}
+
 # Page config
 st.set_page_config(page_title="Heart Disease Predictor", page_icon="🫀", layout="wide")
 
@@ -56,60 +66,65 @@ with col1:
     st.subheader('📋 Medical History')
     high_bp = st.selectbox('High Blood Pressure', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
     high_chol = st.selectbox('High Cholesterol', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
-    chol_check = st.selectbox('Cholesterol Check (Last 5 years)', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
     stroke = st.selectbox('History of Stroke', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
     diabetes = st.selectbox('Diabetes', [0, 1, 2], format_func=lambda x: 'No' if x == 0 else 'Pre-diabetes' if x == 1 else 'Yes')
-    
+
 with col2:
     st.subheader('👤 Lifestyle & Demographics')
     smoker = st.selectbox('Smoker', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
     phys_activity = st.selectbox('Physical Activity (Last 30 days)', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
-    bmi = st.number_input('BMI (Body Mass Index)', min_value=10.0, max_value=60.0, value=25.0, step=0.1)
     sex = st.selectbox('Sex', [0, 1], format_func=lambda x: 'Female' if x == 0 else 'Male')
     age_input = st.number_input('Age (years)', min_value=18, max_value=120, value=50, step=1)
     age_category = age_to_category(age_input)
     st.caption(f'Age category: {age_category} (Used for prediction)')
 
 st.divider()
+
 st.subheader('💪 Health Status')
-col3, col4, col5 = st.columns(3)
-
-with col3:
-    gen_hlth = st.slider('General Health', 1, 5, 3, help='1=Excellent, 2=Very Good, 3=Good, 4=Fair, 5=Poor')
-with col4:
-    ment_hlth = st.slider('Mental Health (Bad days/month)', 0, 30, 0)
-with col5:
-    phys_hlth = st.slider('Physical Health (Bad days/month)', 0, 30, 0)
-
+gen_hlth = st.slider('General Health', 1, 5, 3, help='1=Excellent, 2=Very Good, 3=Good, 4=Fair, 5=Poor')
 diff_walk = st.selectbox('Difficulty Walking or Climbing Stairs', [0, 1], format_func=lambda x: 'No' if x == 0 else 'Yes')
 
 st.divider()
 
 # Predict button
 if st.button('🔍 Predict Heart Disease Risk', type='primary', use_container_width=True):
-    # Prepare data
+    # Prepare data (only the features used in training)
     patient_data = pd.DataFrame([{
         'HighBP': high_bp,
         'HighChol': high_chol,
-        'CholCheck': chol_check,
-        'BMI': bmi,
         'Smoker': smoker,
         'Stroke': stroke,
         'Diabetes': diabetes,
         'PhysActivity': phys_activity,
         'GenHlth': gen_hlth,
-        'MentHlth': ment_hlth,
-        'PhysHlth': phys_hlth,
         'DiffWalk': diff_walk,
         'Sex': sex,
         'Age': age_category
     }])
-    
+
     # Make prediction
     prediction = model.predict(patient_data)[0]
     probability = model.predict_proba(patient_data)[0, 1]
     prob_float = float(probability)
     
+    # Store prediction context
+    st.session_state.prediction_made = True
+    st.session_state.patient_context = {
+        'age': age_input,
+        'sex': 'Male' if sex == 1 else 'Female',
+        'high_bp': 'Yes' if high_bp == 1 else 'No',
+        'high_chol': 'Yes' if high_chol == 1 else 'No',
+        'smoker': 'Yes' if smoker == 1 else 'No',
+        'diabetes': 'Yes' if diabetes == 2 else ('Pre-diabetes' if diabetes == 1 else 'No'),
+        'stroke': 'Yes' if stroke == 1 else 'No',
+        'phys_activity': 'Yes' if phys_activity == 1 else 'No',
+        'gen_hlth': gen_hlth,
+        'diff_walk': 'Yes' if diff_walk == 1 else 'No',
+        'prediction': 'Heart Disease Risk' if prediction == 1 else 'Healthy',
+        'probability': prob_float,
+        'risk_level': 'High' if prob_float >= 0.6 else ('Medium' if prob_float >= 0.3 else 'Low')
+    }
+
     # Display results
     st.divider()
     st.subheader('📊 Prediction Results')
@@ -136,7 +151,7 @@ if st.button('🔍 Predict Heart Disease Risk', type='primary', use_container_wi
         else:
             risk = '🔴 High Risk'
             st.error(risk)
-    
+
     # Risk Assessment Meter
     st.divider()
     st.subheader('🎯 Risk Assessment Meter')
@@ -164,43 +179,44 @@ if st.button('🔍 Predict Heart Disease Risk', type='primary', use_container_wi
     # Progress bar
     st.progress(prob_float)
     st.caption(f"Risk Score: {prob_float*100:.2f}%")
-    
+
     # Recommendation
     st.divider()
     st.subheader('💊 Medical Recommendation')
+    
     if prob_float < 0.3:
         st.success('''
-        **Low Risk Assessment**
-        - Maintain healthy lifestyle habits
-        - Continue regular physical activity
-        - Schedule routine checkups annually
-        - Monitor blood pressure and cholesterol levels
+**Low Risk Assessment**
+- Maintain healthy lifestyle habits
+- Continue regular physical activity
+- Schedule routine checkups annually
+- Monitor blood pressure and cholesterol levels
         ''')
     elif prob_float < 0.6:
         st.warning('''
-        **Medium Risk Assessment**
-        - Consult with healthcare provider soon
-        - Monitor cardiovascular health closely
-        - Consider lifestyle modifications
-        - Schedule follow-up tests (ECG, stress test)
-        - Discuss preventive medications with doctor
+**Medium Risk Assessment**
+- Consult with healthcare provider soon
+- Monitor cardiovascular health closely
+- Consider lifestyle modifications
+- Schedule follow-up tests (ECG, stress test)
+- Discuss preventive medications with doctor
         ''')
     else:
         st.error('''
-        **⚠️ High Risk Assessment**
-        - **Immediate medical consultation strongly recommended!**
-        - Schedule comprehensive cardiac evaluation
-        - Discuss treatment options with cardiologist
-        - Implement lifestyle changes immediately
-        - May require medication or intervention
-        - Do not delay seeking medical attention
+**⚠️ High Risk Assessment**
+- **Immediate medical consultation strongly recommended!**
+- Schedule comprehensive cardiac evaluation
+- Discuss treatment options with cardiologist
+- Implement lifestyle changes immediately
+- May require medication or intervention
+- Do not delay seeking medical attention
         ''')
-    
+
     # Risk Factors Summary
     st.divider()
     st.subheader('⚠️ Identified Risk Factors')
-    risk_factors = []
     
+    risk_factors = []
     if high_bp == 1:
         risk_factors.append("• High Blood Pressure")
     if high_chol == 1:
@@ -211,8 +227,6 @@ if st.button('🔍 Predict Heart Disease Risk', type='primary', use_container_wi
         risk_factors.append("• Diabetes/Pre-diabetes")
     if stroke == 1:
         risk_factors.append("• Previous Stroke")
-    if bmi > 30:
-        risk_factors.append("• Obesity (BMI > 30)")
     if phys_activity == 0:
         risk_factors.append("• Lack of Physical Activity")
     if gen_hlth >= 4:
@@ -224,9 +238,95 @@ if st.button('🔍 Predict Heart Disease Risk', type='primary', use_container_wi
     else:
         st.success("✅ No major risk factors identified")
 
-# Footer
-st.divider()
-st.info('ℹ️ **Disclaimer:** This is a predictive model for educational and screening purposes only. It should NOT replace professional medical advice, diagnosis, or treatment. Always consult qualified healthcare professionals for medical decisions.')
+# Chatbot Section (only show after prediction)
+if st.session_state.prediction_made:
+    st.divider()
+    st.subheader('🤖 Ask Medical Questions')
+    st.write('Have questions about your results? Ask our AI assistant!')
+
+    # API Key input section
+    with st.expander("⚙️ API Configuration", expanded=True):
+        
+        api_key = st.text_input(
+            "Enter your Groq API Key:",
+            type="password",
+            placeholder="gsk_...",
+            help="Your API key is not stored and only used during this session"
+        )
+        
+        if api_key:
+            st.success("✅ API Key connected! You can now chat below.")
+        else:
+            st.warning("⚠️ Please enter your API key above to enable the chatbot.")
+    
+    if api_key:
+        try:
+            client = Groq(api_key=api_key)
+
+            # Display chat history
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            # Chat input
+            if prompt := st.chat_input("Ask a question about your results..."):
+
+                # Add user message
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+
+                # Create context with patient info
+                context = f"""
+You are a helpful medical assistant analyzing heart disease prediction results.
+
+Patient Information:
+- Age: {st.session_state.patient_context['age']} years
+- Sex: {st.session_state.patient_context['sex']}
+- High Blood Pressure: {st.session_state.patient_context['high_bp']}
+- High Cholesterol: {st.session_state.patient_context['high_chol']}
+- Smoker: {st.session_state.patient_context['smoker']}
+- Diabetes: {st.session_state.patient_context['diabetes']}
+- Previous Stroke: {st.session_state.patient_context['stroke']}
+- Physical Activity: {st.session_state.patient_context['phys_activity']}
+- Difficulty Walking: {st.session_state.patient_context['diff_walk']}
+- General Health: {st.session_state.patient_context['gen_hlth']}/5
+
+Prediction Results:
+- Diagnosis: {st.session_state.patient_context['prediction']}
+- Risk Probability: {st.session_state.patient_context['probability']*100:.1f}%
+- Risk Level: {st.session_state.patient_context['risk_level']}
+
+Answer clearly and empathetically. Remind user this is informational only and not medical advice.
+
+Question: {prompt}
+"""
+
+                # Generate response from Groq
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        try:
+                            response = client.chat.completions.create(
+                                model="moonshotai/kimi-k2-instruct-0905",
+                                messages=[{"role": "user", "content": context}]
+                            )
+                            reply = response.choices[0].message.content
+
+                            st.markdown(reply)
+                            st.session_state.messages.append({"role": "assistant", "content": reply})
+                        except Exception as e:
+                            error_msg = f"Error generating response: {str(e)}"
+                            st.error(error_msg)
+                            st.session_state.messages.append({"role": "assistant", "content": error_msg})
+
+            # Clear chat button
+            if st.button("🗑️ Clear Chat History"):
+                st.session_state.messages = []
+                st.rerun()  
+
+        except Exception as e:
+            st.error(f"Error initializing chatbot: {str(e)}")
+            st.info("Please check your Groq API key and try again.")
 
 # Model performance metrics
 with st.expander("📈 Model Performance Metrics"):
@@ -239,6 +339,5 @@ with st.expander("📈 Model Performance Metrics"):
         st.metric("Recall", "85%")
     with col_perf4:
         st.metric("CV Recall", "96.68%")
-    
     st.caption("Model: XGBoost Classifier v3.0")
     st.caption("Training Data: BRFSS Heart Disease Dataset")
