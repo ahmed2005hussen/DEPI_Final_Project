@@ -2,7 +2,11 @@ import streamlit as st
 import joblib
 import pandas as pd
 from groq import Groq
+from dotenv import load_dotenv
+import os
 
+# Load environment variables
+load_dotenv()
 
 # Load model
 @st.cache_resource
@@ -244,24 +248,16 @@ if st.session_state.prediction_made:
     st.subheader('🤖 Ask Medical Questions')
     st.write('Have questions about your results? Ask our AI assistant!')
 
-    # API Key input section
-    with st.expander("⚙️ API Configuration", expanded=True):
-        
-        api_key = st.text_input(
-            "Enter your Groq API Key:",
-            type="password",
-            placeholder="gsk_...",
-            help="Your API key is not stored and only used during this session"
-        )
-        
-        if api_key:
-            st.success("✅ API Key connected! You can now chat below.")
-        else:
-            st.warning("⚠️ Please enter your API key above to enable the chatbot.")
+    # Get API key from environment
+    api_key = os.getenv('GROQ_API_KEY')
     
-    if api_key:
+    if not api_key:
+        st.error("⚠️ GROQ_API_KEY not found in environment variables!")
+        st.info("Please create a .env file with: GROQ_API_KEY=your_api_key_here")
+    else:
         try:
             client = Groq(api_key=api_key)
+            st.success("✅ Chatbot is ready!")
 
             # Display chat history
             for message in st.session_state.messages:
@@ -326,7 +322,7 @@ Question: {prompt}
 
         except Exception as e:
             st.error(f"Error initializing chatbot: {str(e)}")
-            st.info("Please check your Groq API key and try again.")
+            st.info("Please check your GROQ_API_KEY in .env file.")
 
 # Model performance metrics
 with st.expander("📈 Model Performance Metrics"):
