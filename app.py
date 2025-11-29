@@ -257,7 +257,6 @@ if st.session_state.prediction_made:
     else:
         try:
             client = Groq(api_key=api_key)
-            st.success("✅ Chatbot is ready!")
 
             # Display chat history
             for message in st.session_state.messages:
@@ -323,6 +322,9 @@ Question: {prompt}
         except Exception as e:
             st.error(f"Error initializing chatbot: {str(e)}")
             st.info("Please check your GROQ_API_KEY in .env file.")
+
+# Divider before metrics
+st.divider()
 
 # Model performance metrics
 with st.expander("📈 Model Performance Metrics"):
