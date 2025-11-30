@@ -257,6 +257,13 @@ if st.session_state.prediction_made:
     else:
         try:
             client = Groq(api_key=api_key)
+            
+            # Clear chat button (moved up for better UX)
+            col_btn1, col_btn2 = st.columns([3, 1])
+            with col_btn2:
+                if st.button("🗑️ Clear Chat"):
+                    st.session_state.messages = []
+                    st.rerun()
 
             # Display chat history
             for message in st.session_state.messages:
@@ -314,28 +321,43 @@ Question: {prompt}
                             st.error(error_msg)
                             st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
-            # Clear chat button
-            if st.button("🗑️ Clear Chat History"):
-                st.session_state.messages = []
-                st.rerun()  
-
         except Exception as e:
             st.error(f"Error initializing chatbot: {str(e)}")
             st.info("Please check your GROQ_API_KEY in .env file.")
 
-# Divider before metrics
+# Model performance metrics - moved to the very end
 st.divider()
-
-# Model performance metrics
-with st.expander("📈 Model Performance Metrics"):
+with st.expander("ℹ️ About This Model"):
+    st.write("**Model Information:**")
+    st.write("This prediction system uses an XGBoost machine learning model trained on the BRFSS Heart Disease Dataset.")
+    
+    st.write("")
+    st.write("**Performance Metrics:**")
+    
     col_perf1, col_perf2, col_perf3, col_perf4 = st.columns(4)
+    
     with col_perf1:
         st.metric("Accuracy", "67.36%")
+        st.caption("Overall correctness")
+    
     with col_perf2:
         st.metric("ROC-AUC", "0.832")
+        st.caption("Discrimination ability")
+    
     with col_perf3:
         st.metric("Recall", "85%")
+        st.caption("Disease detection rate")
+    
     with col_perf4:
         st.metric("CV Recall", "96.68%")
-    st.caption("Model: XGBoost Classifier v3.0")
-    st.caption("Training Data: BRFSS Heart Disease Dataset")
+        st.caption("Cross-validation score")
+    
+    st.info("""
+    **What do these numbers mean?**
+    - **Accuracy (67%)**: The model correctly identifies heart disease or healthy patients 67% of the time.
+    - **ROC-AUC (0.832)**: Measures how well the model distinguishes between patients with and without heart disease (higher is better, max is 1.0).
+    - **Recall (85%)**: Out of all patients with heart disease, the model correctly identifies 85% of them.
+    - **CV Recall (96.68%)**: The model's consistency in detecting heart disease across different data samples.
+    
+    ⚠️ **Disclaimer**: This tool is for educational purposes only and should not replace professional medical advice.
+    """)
